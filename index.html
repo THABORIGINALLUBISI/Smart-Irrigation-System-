@@ -1,0 +1,57 @@
+#include <LiquidCrystal.h>
+
+// LCD pin configuration: RS, E, D4, D5, D6, D7
+LiquidCrystal lcd(12, 9, 5, 4, 3, 2);
+
+const int soilPin = A0;     // Soil moisture sensor (potentiometer)
+const int tempPin = A1;     // Temperature sensor (potentiometer)
+const int pumpPin = 7;      // LED (simulating water pump)
+
+// Thresholds (you can adjust these)
+const int drySoil = 400;      // Above this = dry
+const float highTemp = 30.0;  // Above this = hot
+
+void setup() {
+  pinMode(pumpPin, OUTPUT);
+  digitalWrite(pumpPin, LOW);
+
+  lcd.begin(16, 2);           // Initialize 16x2 LCD
+  lcd.print("Smart Irrigation");
+  delay(2000);
+  lcd.clear();
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Read soil and temperature
+  int soilValue = analogRead(soilPin);  
+  int tempValue = analogRead(tempPin);  
+
+  // Convert temp sensor reading to Celsius (for LM35-style)
+  float voltage = (tempValue / 1023.0) * 5.0;
+  float temperature = voltage * 100.0;
+
+  // Display sensor readings
+  lcd.setCursor(0, 0);
+  lcd.print("Soil:");
+  lcd.print(soilValue);
+  lcd.print(" Temp:");
+  lcd.print(temperature, 1);
+  lcd.print((char)223);
+  lcd.print("C  ");
+
+  // Control logic + status message
+  lcd.setCursor(0, 1);
+  if (soilValue > drySoil && temperature > highTemp) {
+    digitalWrite(pumpPin, HIGH);
+    lcd.print("Watering plants ");
+    Serial.println("Soil dry & hot -> Pump ON");
+  } else {
+    digitalWrite(pumpPin, LOW);
+    lcd.print("Soil is good :) ");
+    Serial.println("Soil moist/cool -> Pump OFF");
+  }
+
+  delay(1000);
+}
